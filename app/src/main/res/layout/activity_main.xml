@@ -19,7 +19,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:proBackground="@drawable/range_bar_bg"
+        app:proColor="@color/colorAccent"/>
 
     <com.rong.library.RangeBar
         android:layout_width="match_parent"
@@ -31,7 +33,15 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:max="2000"
+        app:min="0"
+        app:preValue="￥"
+        app:proBackground="@drawable/range_bar_bg"
+        app:proColor="#333333"
+        app:textColor="#333333"
+        app:textSize="14sp"
+        app:thumbDrawable="@drawable/thumb_white"/>
 
 
 </LinearLayout>

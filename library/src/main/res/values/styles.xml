@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="RangeBar">
+        <attr name="textSize" format="dimension"/>
+        <attr name="textColor" format="color"/>
+        <attr name="min" format="integer"/>
+        <attr name="max" format="integer"/>
+        <attr name="proBackground" format="reference"/>
+        <attr name="proColor" format="color"/>
+        <attr name="thumbDrawable" format="reference"/>
+        <attr name="preValue" format="string"/>
+        <attr name="lastValue" format="string"/>
+    </declare-styleable>
+</resources>

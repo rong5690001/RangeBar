@@ -1,16 +1,18 @@
 package com.rong.library;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
-import android.support.v4.content.ContextCompat;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -49,12 +51,15 @@ public class RangeBar extends View {
 //    private int bottomTextColor = DEFAULT_TEXTCOLOR;
 //    private int bottomTxtHeight;
 
-    private int min = 0;
-    private int max = 100;
-    private int leftValue;
-    private int rightValue;
-//    private String minTxt = "￥0";
+    private int min;
+    private int max;
+    private String preValue;
+    private String lastValue;
+    //    private String minTxt = "￥0";
 //    private String maxTxt = "￥2000";
+    private int progressWidth;//进度条的宽度
+    private int offset;//进度条的偏移量
+//    private int rightOffset;//进度条的右偏移量
 
     public RangeBar(Context context) {
         this(context, null);
@@ -66,33 +71,52 @@ public class RangeBar extends View {
 
     public RangeBar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init(context, attrs);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public RangeBar(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(context);
+        init(context, attrs);
     }
 
-    private void init(Context context) {
+    private void init(Context context, AttributeSet attrs) {
+
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RangeBar);
+
+        topTextSize = typedArray.getDimensionPixelSize(R.styleable.RangeBar_textSize
+                , DensityUtils.sp2px(getContext(), 14));
+        topTextColor = typedArray.getColor(R.styleable.RangeBar_textColor, DEFAULT_TEXTCOLOR);
+        mBackground = typedArray.getDrawable(R.styleable.RangeBar_proBackground);
+        thumbDrawable = typedArray.getDrawable(R.styleable.RangeBar_thumbDrawable);
+        preValue = typedArray.getString(R.styleable.RangeBar_preValue);
+        preValue = TextUtils.isEmpty(preValue) ? "" : preValue;
+        lastValue = typedArray.getString(R.styleable.RangeBar_lastValue);
+        lastValue = TextUtils.isEmpty(lastValue) ? "" : lastValue;
+        min = typedArray.getInteger(R.styleable.RangeBar_min, 0);
+        max = typedArray.getInteger(R.styleable.RangeBar_max, 2000);
+        int proColor = typedArray.getColor(R.styleable.RangeBar_proColor, Color.BLUE);
+        typedArray.recycle();
+
         leftThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         rightThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         centerDrawablePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerDrawablePaint.setColor(Color.BLUE);
+        centerDrawablePaint.setColor(proColor);
 
         topTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        topTextPaint.setTextSize(DensityUtils.sp2px(getContext(), topTextSize));
+        topTextPaint.setTextSize(topTextSize);
         topTextPaint.setColor(topTextColor);
         topTextPaint.setTextAlign(Paint.Align.CENTER);
 
 //        bottomTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 //        bottomTextPaint.setTextSize(bottomTextSize);
 //        bottomTextPaint.setColor(bottomTextColor);
-
-        mBackground = ContextCompat.getDrawable(context, R.drawable.range_bar_bg);
-        thumbDrawable = ContextCompat.getDrawable(context, R.drawable.thumb_white);
-
+        if (mBackground == null) {
+            mBackground = new ColorDrawable(Color.GRAY);
+        }
+        if (thumbDrawable == null) {
+            thumbDrawable = new ColorDrawable(Color.YELLOW);
+        }
 
     }
 
@@ -113,9 +137,15 @@ public class RangeBar extends View {
         thumbRadius = lineHeight * 2;
         centerDrawablePaint.setStrokeWidth(lineHeight);
         centerY = h * 2 / 3;
-        //TODO
+        //默认位置
         leftThumbX = w / 4;
         rightThumbX = w * 3 / 4;
+
+        int maxValueTxtWidth = (int) topTextPaint.measureText(preValue + max + lastValue);
+        offset = Math.max(thumbRadius, maxValueTxtWidth / 2);
+
+//        int minValueTxtWidth = (int) topTextPaint.measureText(preValue + min + lastValue);
+//        offset = Math.max(thumbRadius, minValueTxtWidth / 2);
     }
 
     @Override
@@ -123,9 +153,9 @@ public class RangeBar extends View {
         super.onDraw(canvas);
 
         if (mBackground != null) {//背景
-            mBackground.setBounds(thumbRadius
+            mBackground.setBounds(getProgressLeft()
                     , centerY - lineHeight / 2
-                    , getWidth() - thumbRadius
+                    , getProgressRight()
                     , centerY + lineHeight / 2);
             mBackground.draw(canvas);
         }
@@ -150,13 +180,13 @@ public class RangeBar extends View {
         }
 
         //左边文字
-        canvas.drawText(String.valueOf(getValue(leftThumbX))
+        canvas.drawText(getValue(leftThumbX)
                 , leftThumbX
                 , centerY - thumbRadius - topTxtHeight / 2
                 , topTextPaint);
 
         //右边文字
-        canvas.drawText(String.valueOf(getValue(rightThumbX))
+        canvas.drawText(getValue(rightThumbX)
                 , rightThumbX
                 , centerY - thumbRadius - topTxtHeight / 2
                 , topTextPaint);
@@ -174,16 +204,16 @@ public class RangeBar extends View {
                 if (touchType == TOUCH_LEFT) {
                     leftThumbX = (int) event.getX();
                     if (isOutside(event)) {//不在进度条范围内
-                        leftThumbX = thumbRadius;
+                        leftThumbX = getProgressLeft();
                     } else if (isCollision(leftThumbX)) {//发生碰撞
-                        leftThumbX = rightThumbX - thumbRadius;
+                        leftThumbX = rightThumbX - thumbRadius * 2;
                     }
                 } else {
                     rightThumbX = (int) event.getX();
                     if (isOutside(event)) {//不在进度条范围内
-                        rightThumbX = getWidth() - thumbRadius;
+                        rightThumbX = getProgressRight();
                     } else if (isCollision(rightThumbX)) {//发生碰撞
-                        rightThumbX = leftThumbX + thumbRadius;
+                        rightThumbX = leftThumbX + thumbRadius * 2;
                     }
                 }
                 invalidate();
@@ -197,8 +227,18 @@ public class RangeBar extends View {
         return true;
     }
 
-    private int getValue(int thumbX) {
-        return min + (max - min) * (thumbX - thumbRadius) / (getWidth() - thumbRadius * 2);
+    private String getValue(int thumbX) {
+        return preValue
+                + (min + (max - min) * (thumbX - getProgressLeft()) / ((getProgressRight()) - getProgressLeft()))
+                + lastValue;
+    }
+
+    private int getProgressLeft() {
+        return offset;
+    }
+
+    private int getProgressRight() {
+        return getWidth() - offset;
     }
 
     /**
@@ -207,8 +247,8 @@ public class RangeBar extends View {
      * @return
      */
     private boolean isOutside(MotionEvent event) {
-        return event.getX() >= getWidth() - thumbRadius
-                || event.getX() <= 0 + thumbRadius;
+        return event.getX() >= getProgressRight()
+                || event.getX() <= getProgressLeft();
     }
 
     private void touchValid(MotionEvent event) {
