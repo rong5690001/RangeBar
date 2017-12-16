@@ -11,9 +11,13 @@ import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.content.ContextCompat;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.rong.library.DensityUtils;
 
 /**
  * Created by chen.huarong on 2017/12/15.
@@ -42,9 +46,17 @@ public class RangeBar extends View {
     private Paint topTextPaint;
     private int topTextSize = DEFAULT_TEXTSIZE;
     private int topTextColor = DEFAULT_TEXTCOLOR;
-    private Paint bottomTextPaint;
-    private int bottomTextSize = DEFAULT_TEXTSIZE;
-    private int bottomTextColor = DEFAULT_TEXTCOLOR;
+    private int topTxtHeight;
+
+//    private Paint bottomTextPaint;
+//    private int bottomTextSize = DEFAULT_TEXTSIZE;
+//    private int bottomTextColor = DEFAULT_TEXTCOLOR;
+//    private int bottomTxtHeight;
+
+    private int min;
+    private int max;
+//    private String minTxt = "￥0";
+//    private String maxTxt = "￥2000";
 
     public RangeBar(Context context) {
         this(context, null);
@@ -71,28 +83,28 @@ public class RangeBar extends View {
         centerDrawablePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         centerDrawablePaint.setColor(Color.BLUE);
 
-        topTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        topTextPaint.setTextSize(topTextSize);
+        topTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        topTextPaint.setTextSize(DensityUtils.sp2px(getContext(), topTextSize));
         topTextPaint.setColor(topTextColor);
+        topTextPaint.setTextAlign(Paint.Align.CENTER);
 
-        bottomTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bottomTextPaint.setTextSize(bottomTextSize);
-        bottomTextPaint.setColor(bottomTextColor);
+//        bottomTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//        bottomTextPaint.setTextSize(bottomTextSize);
+//        bottomTextPaint.setColor(bottomTextColor);
 
         mBackground = ContextCompat.getDrawable(context, R.drawable.range_bar_bg);
         thumbDrawable = ContextCompat.getDrawable(context, R.drawable.thumb_white);
-        thumbDrawableWidth = thumbDrawable.getIntrinsicWidth();
+
+
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        Paint.FontMetrics fontMetrics = new Paint.FontMetrics();
-        fontMetrics = topTextPaint.getFontMetrics();
-        float topTxtHeight = (float) Math.ceil(fontMetrics.descent - fontMetrics.ascent);
-        fontMetrics = bottomTextPaint.getFontMetrics();
-        float bottomTxtHeight = (float) Math.ceil(fontMetrics.descent - fontMetrics.ascent);
-
+        Paint.FontMetrics fontMetrics = topTextPaint.getFontMetrics();
+        topTxtHeight = (int) Math.ceil(fontMetrics.descent - fontMetrics.ascent);
+//        fontMetrics = bottomTextPaint.getFontMetrics();
+//        bottomTxtHeight = (int) Math.ceil(fontMetrics.descent - fontMetrics.ascent);
 
     }
 
@@ -100,8 +112,9 @@ public class RangeBar extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         lineHeight = h / 7;
+        thumbDrawableWidth = lineHeight * 4;
         centerDrawablePaint.setStrokeWidth(lineHeight);
-        centerY = h * 2;
+        centerY = h * 2 / 3;
         //TODO
         leftThumbX = w / 4;
         rightThumbX = w * 3 / 4;
@@ -136,7 +149,10 @@ public class RangeBar extends View {
         }
 
         //左边文字
-//        canvas.drawText("");
+        canvas.drawText(String.valueOf(centerY)
+                , leftThumbX
+                , centerY - thumbDrawableWidth / 2 - topTxtHeight / 2
+                , topTextPaint);
 
 
     }
