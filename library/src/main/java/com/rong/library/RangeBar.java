@@ -19,6 +19,16 @@ import android.view.View;
 
 /**
  * Created by chen.huarong on 2017/12/15.
+ * 范围选择进度条
+ * "textSize" format="dimension"/>
+ * "textColor" format="color"/>
+ * "min" format="integer"/> 最小值
+ * "max" format="integer"/>  最大值
+ * "proBackground" format="reference"/> 进度条背景
+ * "proColor" format="color"/> 进度条颜色
+ * "thumbDrawable" format="reference"/> 圆形按钮drawable
+ * "preValue" format="string"/> 顶部文字前缀
+ * "lastValue" format="string"/> 顶部文字后缀
  */
 
 public class RangeBar extends View {
@@ -28,10 +38,11 @@ public class RangeBar extends View {
     private static final int DEFAULT_TEXTSIZE = 14;
     private static final int DEFAULT_TEXTCOLOR = Color.BLACK;
     private int touchType = TOUCH_NULL;
-
+    //左边圆形按钮
     private Paint leftThumbPaint;
     private int leftThumbX;
     private Rect leftThumbRect = new Rect();
+    //右边圆形按钮
     private Paint rightThumbPaint;
     private int rightThumbX;
     private Rect rightThumbRect = new Rect();
